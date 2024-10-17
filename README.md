@@ -71,20 +71,6 @@ python3 check_movie_links.py quark_config.json movie_links.txt
 (crontab -l ; echo "*/5 * * * * cd /www/wwwroot/你的站点目录 && python3 check_movie_links.py quark_config.json movie_links.txt >/dev/null 2>&1") | crontab -
 ```
 
-### 6.其他
 
-
-
-split_and_merge.sh 转换视频元信息的脚本，目的是躲避官方屏蔽（当你分享热门资源的时候）
-
-使用方法，例如：
-
-```
-./split_and_merge.sh old.mp4 new.mp4
-```
-
-
-
-**old.mp4**为需要转换的资源，**new.mp4**为转换后的资源
 
 <br>
