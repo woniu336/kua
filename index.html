@@ -6,154 +6,186 @@
     <title>夸克网盘链接有效性检测</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.6.14/vue.min.js"></script>
     <script src="https://lf26-cdn-tos.bytecdntp.com/cdn/expire-1-M/axios/0.26.0/axios.min.js"></script>
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #1a1a2e;
-            color: #e0e0e0;
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-        }
-        .container {
-            background-color: #16213e;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-            padding: 30px;
-            width: 90%;
-            max-width: 900px;
-        }
-        h1 {
-            color: #00fff5;
-            text-align: center;
-            margin-bottom: 30px;
-            font-size: 2.5em;
-            text-shadow: 0 0 10px rgba(0,255,245,0.5);
-        }
-        .movie-list {
-            list-style-type: none;
-            padding: 0;
-        }
-        .movie-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px;
-            border-bottom: 1px solid #2c3e50;
-            transition: all 0.3s ease;
-        }
-        .movie-item:last-child {
-            border-bottom: none;
-        }
-        .movie-item:hover {
-            background-color: #1e2a3a;
-        }
-        .movie-name {
-            font-weight: bold;
-            font-size: 1.1em;
-            color: #00fff5;
-            text-decoration: none;
-            transition: all 0.3s ease;
-        }
-        .movie-name:hover {
-            text-shadow: 0 0 8px rgba(0,255,245,0.8);
-        }
-        .status-bar {
-            flex-grow: 1;
-            height: 4px;
-            margin: 0 20px;
-            position: relative;
-            background-color: #2c3e50;
-            overflow: hidden;
-        }
-        .status-bar::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            height: 100%;
-            width: 0;
-            background-color: currentColor;
-            animation: pulse 2s infinite;
-        }
-        @keyframes pulse {
-            0% { width: 0; }
-            50% { width: 100%; }
-            100% { width: 0; }
-        }
-        .status {
-            padding: 5px 10px;
-            border-radius: 4px;
-            font-size: 0.9em;
-            font-weight: bold;
-            text-transform: uppercase;
-        }
-        .status-valid {
-            background-color: #4caf50;
-            color: #e0e0e0;
-        }
-        .status-blocked {
-            background-color: #ff9800;
-            color: #1a1a2e;
-        }
-        .status-invalid {
-            background-color: #f44336;
-            color: #e0e0e0;
-        }
-    </style>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://lf6-cdn-tos.bytecdntp.com/cdn/expire-1-M/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
-<body>
-    <div id="app" class="container">
-        <h1>夸克网盘链接有效性检测</h1>
-        <ul class="movie-list">
-            <li v-for="movie in movies" :key="movie.movie_name" class="movie-item">
-                <a :href="movie.url" target="_blank" class="movie-name">{{ movie.movie_name }}</a>
-                <div class="status-bar" :style="{ color: getStatusColor(movie.status) }"></div>
-                <span class="status" :class="getStatusClass(movie.status)">
-                    {{ getStatusText(movie.status) }}
-                </span>
-            </li>
-        </ul>
+<body class="bg-gray-50">
+    <div id="app" class="container mx-auto px-4 py-8">
+        <!-- 头部统计信息 -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-center text-gray-800 mb-8">夸克网盘链接有效性检测</h1>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="bg-white rounded-lg shadow p-6">
+                    <div class="flex items-center">
+                        <div class="p-3 rounded-full bg-blue-100 text-blue-500">
+                            <i class="fas fa-link text-2xl"></i>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm text-gray-500">总资源数</p>
+                            <p class="text-lg font-semibold">{{ movies.length }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-lg shadow p-6">
+                    <div class="flex items-center">
+                        <div class="p-3 rounded-full bg-green-100 text-green-500">
+                            <i class="fas fa-check text-2xl"></i>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm text-gray-500">有效链接</p>
+                            <p class="text-lg font-semibold">{{ validCount }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-lg shadow p-6">
+                    <div class="flex items-center">
+                        <div class="p-3 rounded-full bg-yellow-100 text-yellow-500">
+                            <i class="fas fa-shield-alt text-2xl"></i>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm text-gray-500">被屏蔽</p>
+                            <p class="text-lg font-semibold">{{ blockedCount }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-lg shadow p-6">
+                    <div class="flex items-center">
+                        <div class="p-3 rounded-full bg-red-100 text-red-500">
+                            <i class="fas fa-times text-2xl"></i>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm text-gray-500">无效链接</p>
+                            <p class="text-lg font-semibold">{{ invalidCount }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 资源表格 -->
+        <div class="bg-white rounded-lg shadow mb-8">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">资源名称</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">状态</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">更新时间</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        <tr v-for="movie in sortedMovies" :key="movie.movie_name" 
+                            class="hover:bg-gray-50"
+                            :class="{
+                                'bg-red-50': movie.status === 'invalid',
+                                'bg-yellow-50': movie.status === 'blocked'
+                            }">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm font-medium text-gray-900">{{ movie.movie_name }}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full"
+                                    :class="{
+                                        'bg-green-100 text-green-800': movie.status === 'valid',
+                                        'bg-yellow-100 text-yellow-800': movie.status === 'blocked',
+                                        'bg-red-100 text-red-800': movie.status === 'invalid'
+                                    }">
+                                    {{ getStatusText(movie.status) }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-500">
+                                    {{ formatDate(movie.timestamp) }}
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                <a :href="movie.url" target="_blank" 
+                                   class="text-indigo-600 hover:text-indigo-900">
+                                    打开链接
+                                </a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 底部趣味区域 -->
+        <div class="text-center text-gray-600">
+            <p class="mb-2">自动更新中...</p>
+            <div class="inline-block">
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-400"></div>
+            </div>
+            <p class="mt-4 text-sm">
+                下次更新时间: {{ nextUpdateTime }}
+            </p>
+        </div>
     </div>
 
     <script>
         new Vue({
             el: '#app',
             data: {
-                movies: []
+                movies: [],
+                nextUpdateTime: ''
+            },
+            computed: {
+                sortedMovies() {
+                    return [...this.movies].sort((a, b) => {
+                        // 首先按状态优先级排序
+                        const priority = {
+                            'invalid': 0,
+                            'blocked': 1,
+                            'valid': 2
+                        };
+                        const statusDiff = priority[a.status] - priority[b.status];
+                        
+                        // 如果状态相同，则按时间戳倒序排序
+                        if (statusDiff === 0) {
+                            return b.timestamp - a.timestamp;
+                        }
+                        return statusDiff;
+                    });
+                },
+                validCount() {
+                    return this.movies.filter(m => m.status === 'valid').length;
+                },
+                blockedCount() {
+                    return this.movies.filter(m => m.status === 'blocked').length;
+                },
+                invalidCount() {
+                    return this.movies.filter(m => m.status === 'invalid').length;
+                }
             },
             methods: {
                 loadData() {
                     axios.get('movie_check_result.json')
                         .then(response => {
                             const data = response.data;
+                            const currentTime = Date.now();
                             this.movies = [
-                                ...data.valid.map(m => ({ ...m, status: 'valid' })),
-                                ...data.empty.map(m => ({ ...m, status: 'blocked' })),
-                                ...data.invalid.map(m => ({ ...m, status: 'invalid' }))
+                                ...data.valid.map(m => ({ 
+                                    ...m, 
+                                    status: 'valid',
+                                    timestamp: m.timestamp || currentTime
+                                })),
+                                ...data.empty.map(m => ({ 
+                                    ...m, 
+                                    status: 'blocked',
+                                    timestamp: m.timestamp || currentTime
+                                })),
+                                ...data.invalid.map(m => ({ 
+                                    ...m, 
+                                    status: 'invalid',
+                                    timestamp: m.timestamp || currentTime
+                                }))
                             ];
+                            this.updateNextUpdateTime();
                         })
                         .catch(error => {
                             console.error('Error loading data:', error);
                         });
-                },
-                getStatusClass(status) {
-                    return {
-                        'status-valid': status === 'valid',
-                        'status-blocked': status === 'blocked',
-                        'status-invalid': status === 'invalid'
-                    };
-                },
-                getStatusColor(status) {
-                    switch(status) {
-                        case 'valid': return '#4caf50';
-                        case 'blocked': return '#ff9800';
-                        case 'invalid': return '#f44336';
-                        default: return '#2c3e50';
-                    }
                 },
                 getStatusText(status) {
                     switch(status) {
@@ -162,11 +194,27 @@
                         case 'invalid': return '无效';
                         default: return '未知';
                     }
+                },
+                formatDate(timestamp) {
+                    const date = new Date(timestamp);
+                    return date.toLocaleString('zh-CN', {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit',
+                        hour12: false
+                    });
+                },
+                updateNextUpdateTime() {
+                    const next = new Date(Date.now() + 60000);
+                    this.nextUpdateTime = this.formatDate(next);
                 }
             },
             mounted() {
                 this.loadData();
-                setInterval(this.loadData, 60000); // 每分钟刷新一次
+                setInterval(this.loadData, 60000);
             }
         });
     </script>

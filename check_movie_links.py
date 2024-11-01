@@ -11,9 +11,9 @@ import urllib.parse
 from quark_auto_save import Quark
 from check_quark_links import print_bordered_table
 
-# 钉钉通知配置
-ACCESS_TOKEN = ""
-SECRET = ""
+# 钉钉配置
+ACCESS_TOKEN = "d8bbf71a760f369766cc40b598d545d41d4c3b03a886ab96241c74e3c68ee8ff"
+SECRET = "SECc20c7d0716ff9e912c8ecc1e13e19a0e90f2f4b0939beaf557718c1fe3c23660"
 
 def load_gitignore(gitignore_path='.gitignore'):
     try:
@@ -144,7 +144,7 @@ def check_movie_links(config_file, movie_links_file):
         if valid_links:
             print_bordered_table("有效非空链接", valid_links, ["电影名称", "有效URL"])
         
-        print(f"\n总计检查了 {len(movie_links)} 个链接，其中 {len(valid_links)} 个有效且包含非忽略文件，{len(empty_links)} 个仅包含被忽略文件，{len(invalid_links)} 个无效。")
+        print(f"\n总计检查了 {len(movie_links)} 个链接，其中 {len(valid_links)} 个有效链接，{len(empty_links)} 个资源被过滤链接，{len(invalid_links)} 个无效。")
 
         # 更新链接文件
         with open(movie_links_file, 'w', encoding='utf-8') as file:
