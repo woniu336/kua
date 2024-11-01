@@ -12,8 +12,8 @@ from quark_auto_save import Quark
 from check_quark_links import print_bordered_table
 
 # 钉钉配置
-ACCESS_TOKEN = "d8bbf71a760f369766cc40b598d545d41d4c3b03a886ab96241c74e3c68ee8ff"
-SECRET = "SECc20c7d0716ff9e912c8ecc1e13e19a0e90f2f4b0939beaf557718c1fe3c23660"
+ACCESS_TOKEN = ""
+SECRET = ""
 
 def load_gitignore(gitignore_path='.gitignore'):
     try:
