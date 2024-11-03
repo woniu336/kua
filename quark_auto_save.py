@@ -247,16 +247,29 @@ class Quark:
                 "_sort": "file_type:asc,updated_at:desc",
             }
             headers = self.common_headers()
-            response = requests.request(
-                "GET", url, headers=headers, params=querystring
-            ).json()
-            if response["data"]["list"]:
-                file_list += response["data"]["list"]
-                page += 1
-            else:
-                break
-            if len(file_list) >= response["metadata"]["_total"]:
-                break
+            try:
+                response = requests.request(
+                    "GET", url, headers=headers, params=querystring
+                ).json()
+                
+                # 检查响应是否包含必要的字段
+                if not response.get("data") or "list" not in response["data"]:
+                    print(f"获取分享文件列表失败: {response.get('message', '未知错误')}")
+                    return None
+                
+                if response["data"]["list"]:
+                    file_list += response["data"]["list"]
+                    page += 1
+                else:
+                    break
+                
+                if len(file_list) >= response["metadata"]["_total"]:
+                    break
+                
+            except Exception as e:
+                print(f"获取分享文件列表出错: {str(e)}")
+                return None
+                
         return file_list
 
     def get_fids(self, file_paths):

@@ -30,21 +30,29 @@ def check_directory_content(quark, pwd_id, stoken, fid="", ignore_patterns=None)
     if ignore_patterns is None:
         ignore_patterns = []
     
-    share_file_list = quark.get_detail(pwd_id, stoken, fid)
-    
-    if share_file_list is None:
+    try:
+        share_file_list = quark.get_detail(pwd_id, stoken, fid)
+        
+        # 如果获取文件列表失败，返回None
+        if share_file_list is None:
+            print(f"无法获取分享文件列表")
+            return None
+        
+        # 检查文件列表中是否有非忽略的文件
+        for item in share_file_list:
+            if item.get('file') is True:
+                if not is_ignored(item.get('file_name', ''), ignore_patterns):
+                    return True
+            elif item.get('dir') is True:
+                result = check_directory_content(quark, pwd_id, stoken, item['fid'], ignore_patterns)
+                if result is True:
+                    return True
+        
+        return False
+        
+    except Exception as e:
+        print(f"检查目录内容时出错: {str(e)}")
         return None
-    
-    for item in share_file_list:
-        if item.get('file') is True:
-            if not is_ignored(item.get('file_name', ''), ignore_patterns):
-                return True
-        elif item.get('dir') is True:
-            result = check_directory_content(quark, pwd_id, stoken, item['fid'], ignore_patterns)
-            if result is True:
-                return True
-    
-    return False
 
 def generate_sign():
     timestamp = str(round(time.time() * 1000))
@@ -116,22 +124,30 @@ def check_movie_links(config_file, movie_links_file):
             movie_name, shareurl = parts
 
             print(f"正在检查: {movie_name}")
-            pwd_id, _ = quark.get_id_from_url(shareurl)
-            is_valid, stoken = quark.get_stoken(pwd_id)
+            try:
+                pwd_id, _ = quark.get_id_from_url(shareurl)
+                is_valid, stoken = quark.get_stoken(pwd_id)
 
-            if is_valid:
-                content_check = check_directory_content(quark, pwd_id, stoken, ignore_patterns=ignore_patterns)
-                if content_check is None:
-                    print(f"链接无效: {movie_name} - 无法获取内容")
-                    invalid_links.append((movie_name, shareurl))
-                elif content_check:
-                    print(f"链接有效且包含非忽略文件: {movie_name}")
-                    valid_links.append((movie_name, shareurl))
+                if is_valid:
+                    content_check = check_directory_content(quark, pwd_id, stoken, ignore_patterns=ignore_patterns)
+                    if content_check is None:
+                        print(f"链接无效: {movie_name} - 无法获取内容")
+                        invalid_links.append((movie_name, shareurl))
+                    elif content_check:
+                        print(f"链接有效且包含非忽略文件: {movie_name}")
+                        valid_links.append((movie_name, shareurl))
+                    else:
+                        print(f"链接有效但仅包含被忽略的文件: {movie_name}")
+                        empty_links.append((movie_name, shareurl))
                 else:
-                    print(f"链接有效但仅包含被忽略的文件: {movie_name}")
-                    empty_links.append((movie_name, shareurl))
-            else:
-                print(f"链接无效: {movie_name} - {stoken}")
+                    print(f"链接无效: {movie_name} - {stoken}")
+                    invalid_links.append((movie_name, shareurl))
+                    
+                # 添加延时，避免请求过快
+                time.sleep(1)
+                
+            except Exception as e:
+                print(f"检查链接时出错 ({movie_name}): {str(e)}")
                 invalid_links.append((movie_name, shareurl))
 
         # 打印汇总结果
